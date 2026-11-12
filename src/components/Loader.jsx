@@ -2,8 +2,8 @@ import styled from "styled-components";
 
 const Loader = () => {
   return (
-    <StyledWrapper>
-      <div className="loader">
+    <StyledWrapper role="status" aria-label="Loading astronomy picture">
+      <div className="loader" aria-hidden="true">
         <span className="loader-text">loading</span>
         <span className="load" />
       </div>
@@ -15,8 +15,9 @@ const StyledWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  flex: 1;
+  min-width: 0;
 
   .loader {
     width: 80px;
@@ -55,6 +56,12 @@ const StyledWrapper = styled.div`
     background-color: #d1c2ff;
     border-radius: inherit;
     animation: loading2_713 3.5s ease both infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .loader-text, .load, .load::before {
+      animation: none;
+    }
   }
 
   @keyframes text_713 {

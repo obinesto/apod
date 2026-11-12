@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import Main from "./components/Main";
+import { useCallback, useEffect, useState } from "react";
+import Image from "./components/Image";
 import SideBar from "./components/SideBar";
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
@@ -22,72 +22,89 @@ Source: NASA/JPL-Caltech/R. Hurt (SSC/Caltech) (https://science.nasa.gov/resourc
 };
 
 function App() {
-  const NASA_API = import.meta.env.VITE_NASA_API;
-  const [data, setData] = useState(null);
+  const NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY;
+  const [apiData, setApiData] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  function handleToggleModal() {
-    setShowModal(!showModal);
-  }
+  const handleToggleModal = useCallback(() => {
+    setShowModal((isOpen) => !isOpen);
+  }, []);
 
   useEffect(() => {
     async function fetchAPIData() {
       const today = new Date().toISOString().split("T")[0];
       const localKey = `apodData-${today}`;
-      const cachedData = JSON.parse(localStorage.getItem(localKey));
-
-      if (cachedData) {
-        const isDataIncomplete = !cachedData.title || !cachedData.hdurl || !cachedData.explanation;
-        if (isDataIncomplete || cachedData.date !== today) {
-          console.warn(
-            "Cached data is incomplete or outdated, fetching new data"
-          );
-        } else {
-          setData(cachedData);
-          console.log(`Fetched from cache: ${localKey}`);
-          return;
-        }
-      }
 
       try {
-        const response = await fetch(
-          `https://api.nasa.gov/planetary/apod?api_key=${NASA_API}`
-        );
-        const apiData = await response.json();
+        const cachedData = JSON.parse(localStorage.getItem(localKey));
 
-        const isAPIDataIncomplete = !apiData.title || !apiData.hdurl || !apiData.explanation;
-        if (isAPIDataIncomplete) {
+        if (cachedData) {
+          const isDataIncomplete =
+            !cachedData.title || !cachedData.hdurl || !cachedData.explanation;
+          if (isDataIncomplete || cachedData.date !== today) {
+            console.warn(
+              "Cached data is incomplete or outdated, fetching new data",
+            );
+          } else {
+            setApiData(cachedData);
+            console.log(`Fetched from cache: ${localKey}`);
+            return;
+          }
+        }
+
+        const response = await fetch(
+          `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`,
+        );
+        if (!response.ok) {
+          throw new Error(`APOD request failed with status ${response.status}`);
+        }
+        const res = await response.json();
+
+        if (!res.title || !res.hdurl || !res.explanation) {
           console.warn("API data is incomplete, using fallback data");
-          setData(fallbackData);
+          setApiData(fallbackData);
         } else {
-          localStorage.setItem(localKey, JSON.stringify(apiData));
-          setData(apiData);
+          localStorage.setItem(localKey, JSON.stringify(res));
+          setApiData(res);
           console.log("Fetched from API today");
         }
-      } catch (error) {
-        console.error("Error fetching data: ", error);
-        setData(fallbackData);
+      } catch {
+        console.error("Error fetching data");
+        setApiData(fallbackData);
       }
     }
 
     fetchAPIData();
-  }, [NASA_API]);
+  }, [NASA_API_KEY]);
 
   return (
     <>
-      {data ? (
-        <Main data={data} />
+      {apiData ? (
+        <Image
+          key={apiData.hdurl}
+          res={apiData}
+          onError={
+            apiData === fallbackData ? undefined : () => setApiData(fallbackData)
+          }
+        />
       ) : (
-        // <div className="loadingState">
-        //   <i className="fa-solid fa-gear fa-2xl"></i>
-        //   <h2>Loading...</h2>
-        // </div>
-        <Loader/>
+        <Loader />
       )}
       {showModal && (
-        <SideBar data={data} handleToggleModal={handleToggleModal} />
+        <SideBar
+          res={apiData}
+          isFallback={apiData === fallbackData}
+          handleToggleModal={handleToggleModal}
+        />
       )}
-      {data && <Footer data={data} handleToggleModal={handleToggleModal} />}
+      {apiData && (
+        <Footer
+          res={apiData}
+          isFallback={apiData === fallbackData}
+          showModal={showModal}
+          handleToggleModal={handleToggleModal}
+        />
+      )}
     </>
   );
 }
