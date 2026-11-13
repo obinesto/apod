@@ -5,6 +5,8 @@ import Footer from "./components/Footer";
 import Loader from "./components/Loader";
 import fallbackImage from "./assets/ssc2008-10b1.png";
 
+const today = new Date().toISOString().split("T")[0];
+
 const fallbackData = {
   title: "Milky Way",
   hdurl: fallbackImage,
@@ -18,11 +20,10 @@ The artist's concept also includes a new spiral arm, called the "Far-3 kiloparse
 
 Our Sun lies near a small, partial arm called the Orion Arm, or Orion Spur, located between the Sagittarius and Perseus arms.
 Source: NASA/JPL-Caltech/R. Hurt (SSC/Caltech) (https://science.nasa.gov/resource/the-milky-way-galaxy)`,
-  date: new Date().toISOString().split("T")[0],
+  date: today,
 };
 
 function App() {
-  const NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY;
   const [apiData, setApiData] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -32,7 +33,6 @@ function App() {
 
   useEffect(() => {
     async function fetchAPIData() {
-      const today = new Date().toISOString().split("T")[0];
       const localKey = `apodData-${today}`;
 
       try {
@@ -40,7 +40,8 @@ function App() {
 
         if (cachedData) {
           const isDataIncomplete =
-            !cachedData.title || !cachedData.hdurl || !cachedData.explanation;
+            !cachedData.title || !cachedData.hdurl || !cachedData.url || !cachedData.explanation;
+
           if (isDataIncomplete || cachedData.date !== today) {
             console.warn(
               "Cached data is incomplete or outdated, fetching new data",
@@ -52,15 +53,16 @@ function App() {
           }
         }
 
+        const dateParam = today.split("-").join("").slice(2)
         const response = await fetch(
-          `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`,
+          `https://science.nasa.gov/wp-json/wp/v2/apod-basic/${dateParam}`,
         );
         if (!response.ok) {
           throw new Error(`APOD request failed with status ${response.status}`);
         }
         const res = await response.json();
 
-        if (!res.title || !res.hdurl || !res.explanation) {
+        if (!res.title || !res.hdurl || !res.url || !res.explanation) {
           console.warn("API data is incomplete, using fallback data");
           setApiData(fallbackData);
         } else {
@@ -75,7 +77,7 @@ function App() {
     }
 
     fetchAPIData();
-  }, [NASA_API_KEY]);
+  }, []);
 
   return (
     <>
@@ -84,7 +86,9 @@ function App() {
           key={apiData.hdurl}
           res={apiData}
           onError={
-            apiData === fallbackData ? undefined : () => setApiData(fallbackData)
+            apiData === fallbackData
+              ? undefined
+              : () => setApiData(fallbackData)
           }
         />
       ) : (

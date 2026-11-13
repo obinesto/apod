@@ -1,17 +1,24 @@
 import PropTypes from "prop-types";
-export default function Footer({ handleToggleModal, res, showModal, isFallback }) {
+export default function Footer({
+  handleToggleModal,
+  res,
+  showModal,
+  isFallback,
+}) {
   return (
     <footer>
       <div className="bgGradient" aria-hidden="true"></div>
       <div>
         <h1>APOD</h1>
-        <h2>{res?.title}</h2>
+        <h2>{res.title}</h2>
         {isFallback && <p className="pictureType">Featured image</p>}
       </div>
       <button
         type="button"
         onClick={handleToggleModal}
-        aria-label={showModal ? "Close picture details" : "Open picture details"}
+        aria-label={
+          showModal ? "Close picture details" : "Open picture details"
+        }
         aria-expanded={showModal}
         aria-controls={showModal ? "picture-details" : undefined}
         title={showModal ? "Close picture details" : "Open picture details"}

@@ -59,7 +59,9 @@ const StyledWrapper = styled.div`
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .loader-text, .load, .load::before {
+    .loader-text,
+    .load,
+    .load::before {
       animation: none;
     }
   }

@@ -13,7 +13,7 @@ export default function Image({ res, onError }) {
         </div>
       )}
       <img
-        src={res?.hdurl}
+        src={res.hdurl || res.url}
         alt={res?.title || "Astronomy picture"}
         className={`bgImage${status !== "loaded" ? " bgImageHidden" : ""}`}
         onLoad={() => setStatus("loaded")}

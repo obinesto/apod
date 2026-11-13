@@ -1,8 +1,17 @@
 import PropTypes from "prop-types";
 import { useEffect, useRef } from "react";
+import DomPurify from "dompurify";
 
 export default function SideBar({ handleToggleModal, res, isFallback }) {
   const dialogRef = useRef(null);
+  const apiExplanation = isFallback
+    ? null
+    : DomPurify.sanitize(res.explanation, { RETURN_DOM: true });
+
+  apiExplanation?.querySelectorAll("a[href]").forEach((link) => {
+    link.setAttribute("target", "_blank");
+    link.setAttribute("rel", "noopener noreferrer");
+  });
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -50,7 +59,7 @@ export default function SideBar({ handleToggleModal, res, isFallback }) {
     >
       <div className="sidebarContents">
         <div className="sidebarHeader">
-          <h2 id="picture-details-title">{res?.title}</h2>
+          <h2 id="picture-details-title">{res.title}</h2>
           <button
             type="button"
             onClick={handleToggleModal}
@@ -62,13 +71,26 @@ export default function SideBar({ handleToggleModal, res, isFallback }) {
             </svg>
           </button>
         </div>
-        <div className="sidebarBody" tabIndex={0} role="region" aria-label="Picture explanation">
+        <div
+          className="sidebarBody"
+          tabIndex={0}
+          role="region"
+          aria-label="Picture explanation"
+        >
           {isFallback ? (
             <strong>Featured image</strong>
           ) : (
-            <time dateTime={res?.date}>{res?.date}</time>
+            <time dateTime={res.date}>{res.date}</time>
           )}
-          <p>{res?.explanation}</p>
+          {isFallback ? (
+            <p>{res.explanation}</p>
+          ) : (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: apiExplanation.innerHTML,
+              }}
+            />
+          )}
         </div>
       </div>
     </dialog>
